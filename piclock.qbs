@@ -1,6 +1,15 @@
 import qbs
 
+Project {
+    references: [
+        "rpi-rgb-led-matrix/rpi-rgb-led-matrix.qbs"
+    ]
 CppApplication {
+    name: "piclock"
+
+    Depends {
+        name: "rpi-rgb-led-matrix"
+    }
 
     cpp.optimization: "none"
     cpp.debugInformation: true
@@ -13,12 +22,11 @@ CppApplication {
     cpp.commonCompilerFlags: [
         "-Wall", "-Wextra"
     ]
-    name: "HelloWorld"
     Group {
         name: "source"
         prefix: "src/"
         files: [
-            "multiclock.cpp"
+            "piclock.cpp"
         ]
     }
     Group {
@@ -28,4 +36,6 @@ CppApplication {
         qbs.install: true
         qbs.installDir: "bin"
     }
-}
+
+} //CppApplication
+} //Project
