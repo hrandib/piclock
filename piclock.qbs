@@ -4,8 +4,7 @@ Project {
     references: [
         "rpi-rgb-led-matrix/rpi-rgb-led-matrix.qbs"
     ]
-CppApplication {
-    name: "piclock"
+CppApplication { name: "piclock"
 
     Depends {
         name: "rpi-rgb-led-matrix"
@@ -19,8 +18,11 @@ CppApplication {
     cpp.cxxFlags: [
         "-std=gnu++17"
     ]
+    cpp.linkerFlags: [
+        "-lpthread"
+    ]
     cpp.commonCompilerFlags: [
-        "-Wall", "-Wextra"
+        "-Wall", "-Wextra", "-Wno-unused-parameter"
     ]
     Group {
         name: "source"
@@ -29,6 +31,7 @@ CppApplication {
             "piclock.cpp"
         ]
     }
+
     Group {
         name: "The app"
         fileTagsFilter: "application"
