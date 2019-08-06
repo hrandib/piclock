@@ -1,3 +1,6 @@
 [submodule "rpi-rgb-led-matrix"]
 	path = rpi-rgb-led-matrix
 	url = git@github.com:hrandib/rpi-rgb-led-matrix.git
+[submodule "yaml-cpp"]
+	path = yaml-cpp
+	url = git@github.com:jbeder/yaml-cpp.git
