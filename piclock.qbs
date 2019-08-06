@@ -10,8 +10,8 @@ CppApplication { name: "piclock"
         name: "rpi-rgb-led-matrix"
     }
 
-    cpp.optimization: "none"
-    cpp.debugInformation: true
+    cpp.optimization: "fast"
+    cpp.debugInformation: false
     cpp.cFlags: [
         "-std=gnu11"
     ]
