@@ -1,0 +1,8 @@
+clock:
+  font: hoog32.bdf
+  brightness: 5
+  color:
+    mode: RGB # options - HSV, name
+    value: [255, 255, 30]
+  format: "%H:%M"
+  position: [50, 0]

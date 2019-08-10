@@ -6,6 +6,8 @@ Project {
         "rpi-rgb-led-matrix/rpi-rgb-led-matrix.qbs"
     ]
 
+    property string appPath: "/home/pi/wallclock"
+
 Product { name: "cppOptions"
 
     Export {
@@ -14,6 +16,9 @@ Product { name: "cppOptions"
 
         cpp.optimization: "fast"
         cpp.debugInformation: false
+        cpp.includePaths: [
+            "yaml-cpp/include"
+        ]
         cpp.cFlags: [
             "-std=gnu11"
         ]
@@ -44,34 +49,50 @@ CppApplication { name: "piclock"
     }
 
     Group {
-        name: "The app"
+        name: "app"
         fileTagsFilter: "application"
-        qbs.installPrefix:"/home/pi"
+        qbs.installPrefix: project.appPath
         qbs.install: true
-        qbs.installDir: "bin"
     }
+
+    Group { name: "config"
+        qbs.install: true
+        qbs.installPrefix: project.appPath
+        prefix: "prebuilt/"
+        files: [
+            "config.yml"
+        ]
+    }
+
+    Group { name: "fonts"
+        qbs.install: true
+        qbs.installPrefix: project.appPath
+        prefix: "fonts/"
+        files: [
+            "*.bdf"
+        ]
+    }
+
 
 } //CppApplication
 
-StaticLibrary { name: "yaml-cpp"
+Product { name: "yaml-cpp"
 
     Depends { name: "cppOptions" }
-
-    cpp.includePaths: [
-        "yaml-cpp/include"
-    ]
-    Group { name: "yaml_inc"
-        prefix: "yaml-cpp/"
-        files: [
-            "include/yaml-cpp/**/*.h",
-            "src/**/*.h"
-        ]
-    }
-    Group { name: "yaml_src"
-        prefix: "yaml-cpp/src/"
-        files: [
-            "**/*.cpp"
-        ]
+    Export {
+        Group { name: "yaml_inc"
+            prefix: "yaml-cpp/"
+            files: [
+                "include/yaml-cpp/**/*.h",
+                "src/**/*.h"
+            ]
+        }
+        Group { name: "yaml_src"
+            prefix: "yaml-cpp/src/"
+            files: [
+                "**/*.cpp"
+            ]
+        }
     }
 }
 
