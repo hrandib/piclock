@@ -17,6 +17,7 @@ Product { name: "cppOptions"
         cpp.optimization: "fast"
         cpp.debugInformation: false
         cpp.includePaths: [
+            "inc",
             "yaml-cpp/include"
         ]
         cpp.cFlags: [
@@ -40,16 +41,22 @@ CppApplication { name: "piclock"
     Depends { name: "rpi-rgb-led-matrix" }
     Depends { name: "yaml-cpp" }
 
-    Group {
-        name: "source"
+    Group { name: "source"
         prefix: "src/"
         files: [
-            "piclock.cpp"
+            "clock_impl.cpp",
+            "piclock.cpp",
         ]
     }
 
-    Group {
-        name: "app"
+    Group { name: "include"
+        prefix: "inc/"
+        files: [
+            "clock_impl.h",
+        ]
+    }
+
+    Group { name: "app"
         fileTagsFilter: "application"
         qbs.installPrefix: project.appPath
         qbs.install: true
