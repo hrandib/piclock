@@ -20,14 +20,19 @@
 #include <filesystem>
 #include <stdexcept>
 #include <memory>
+#include <optional>
+#include <experimental/source_location>
 
 using std::string;
 using std::pair;
 using std::vector;
 using std::cout;
 using std::endl;
+using std::optional;
+using std::experimental::source_location;
 using rgb_matrix::FrameCanvas;
 using rgb_matrix::RGBMatrix;
+using rgb_matrix::RuntimeOptions;
 
 static volatile bool interrupt_received = false;
 static void InterruptHandler(int /*signo*/)
@@ -35,31 +40,63 @@ static void InterruptHandler(int /*signo*/)
     interrupt_received = true;
 }
 
-
-static void loadConfig(const char* execPath)
+class Options
 {
-    std::filesystem::path fspath{execPath};
-    fspath.replace_filename("config.yml");
-    cout << fspath << std::endl;
-    YAML::Node root = YAML::LoadFile(fspath);
-    if(root.IsDefined()) {
-        YAML::Node clock = root["clock"];
+private:
+    YAML::Node rootNode_;
+
+    optional<YAML::Node> getNode(const string& nodeName) {
         try {
-            cout << clock["font"].as<string>() << endl;
-        } catch (std::exception& e) {
-            cout << e.what() << endl;
+            YAML::Node node = rootNode_[nodeName];
+            if(node.IsDefined()) {
+                return std::make_optional(node);
+            }
+        } catch(const YAML::InvalidNode&) {
+            return {};
+        }
+        return {};
+    }
+
+public:
+    Options(const char* programPath, const char* configFileName = "config.yml") {
+        std::filesystem::path fspath{programPath};
+        fspath.replace_filename(configFileName);
+        cout << "Used config file: " << fspath << '\n';
+        rootNode_ = YAML::LoadFile(fspath);
+        if(!rootNode_.IsDefined()) {
+            throw YAML::Exception{YAML::Mark::null_mark(), "Root node not found"};
         }
     }
-}
+    optional<RGBMatrix::Options> getMatrixOptions() {
+        if(auto node = getNode("matrix"); node) {
+            try {
+                int rows = node.value()["rows"].as<int>();
+                int cols = node.value()["cols"].as<int>();
+                int chain = node.value()["chain"].as<int>();
+                int brigthness = node.value()["brightness"].as<int>();
+                RGBMatrix::Options options;
+                options.rows = rows;
+                options.cols = cols;
+                options.chain_length = chain;
+                options.brightness = brigthness;
+                if(options.Validate(nullptr)) {
+                    return std::make_optional(options);
+                }
+            } catch (const YAML::Exception&) {
+                return {};
+            }
+        }
+        return {};
+    }
+};
+
 
 int main(int /*argc*/, char* argv[])
 {
-    extern int brightness;
-
-    loadConfig(argv[0]);
     signal(SIGTERM, InterruptHandler);
     signal(SIGINT, InterruptHandler);
 
+    Options opts{argv[0]};
     std::unique_ptr<Clock> clock;
     try {
         clock = std::make_unique<Clock>(argv);
@@ -67,15 +104,15 @@ int main(int /*argc*/, char* argv[])
         std::cerr << e.what();
         return 1;
     }
-
-    RGBMatrix* matrix = rgb_matrix::CreateMatrixFromOptions(clock->matrixOptions(),
-                        clock->runtimeOptions());
+    RGBMatrix* matrix{};
+    if(auto matrixOpts = opts.getMatrixOptions(); matrixOpts) {
+        matrix = rgb_matrix::CreateMatrixFromOptions(*opts.getMatrixOptions(), RuntimeOptions{});
+    }
     if(matrix == nullptr) {
         std::cerr << "The matrix creation failed";
         return 1;
     }
     FrameCanvas* offscreen = matrix->CreateFrameCanvas();
-    matrix->SetBrightness(static_cast<uint8_t>(5));
 
     while(!interrupt_received) {
         clock->Update(offscreen);
