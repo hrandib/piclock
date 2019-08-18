@@ -24,6 +24,7 @@
 using std::string;
 using std::vector;
 using std::invalid_argument;
+using std::to_string;
 using namespace std::string_literals;
 using namespace rgb_matrix;
 
@@ -43,11 +44,9 @@ namespace  {
     const char* time_format = "%H:%M";
     Color color(255, 255, 0);
     Color bg_color(0, 0, 0);
-    Color outline_color(0, 0, 0);
     int x_orig = 0;
     int y_orig = 0;
     int letter_spacing = 0;
-    rgb_matrix::Font* outline_font = nullptr;
 
     int usage(const char* progname)
     {
@@ -64,8 +63,6 @@ namespace  {
                 "\t-y <y-origin>     : Y-Origin of displaying text (Default: 0)\n"
                 "\t-S <spacing>      : Spacing pixels between letters (Default: 0)\n"
                 "\t-C <r,g,b>        : Color. Default 255,255,0\n"
-                "\t-B <r,g,b>        : Background-Color. Default 0,0,0\n"
-                "\t-O <r,g,b>        : Outline-Color, e.g. to increase contrast.\n"
                );
         return 1;
     }
@@ -123,7 +120,6 @@ Clock::Clock(char** argv)
         illegalOption("Args parsing failed");
     }
 
-    bool with_outline = false;
     const char* bdf_font_file = nullptr;
 
     int opt;
@@ -152,19 +148,8 @@ Clock::Clock(char** argv)
                 illegalOption("Invalid color spec");
             }
             break;
-        case 'B':
-            if(!parseColor(&bg_color, optarg)) {
-                illegalOption("Invalid background color spec");
-            }
-            break;
-        case 'O':
-            if(!parseColor(&outline_color, optarg)) {
-                illegalOption("Invalid outline color spec");
-            }
-            with_outline = true;
-            break;
         default:
-            illegalOption("No such option");
+            illegalOption("No such option: " + to_string(opt));
         }
     }
     if(bdf_font_file == nullptr) {
@@ -175,9 +160,6 @@ Clock::Clock(char** argv)
      */
     if(!font_.LoadFont(bdf_font_file)) {
         illegalOption("Couldn't load font "s + bdf_font_file);
-    }
-    if(with_outline) {
-        outline_font = font_.CreateOutlineFont();
     }
     if(brightness < 1 || brightness > 100) {
         illegalOption("Brightness is outside usable range");
@@ -197,12 +179,6 @@ void Clock::Update(rgb_matrix::FrameCanvas* canvas)
     localtime_r(&next_time.tv_sec, &tm);
     strftime(text_buffer, sizeof(text_buffer), time_format, &tm);
     canvas->Fill(bg_color.r, bg_color.g, bg_color.b);
-    if(outline_font) {
-        rgb_matrix::DrawText(canvas, *outline_font,
-                             x - 1, y + font_.baseline(),
-                             outline_color, nullptr, text_buffer,
-                             letter_spacing - 2);
-    }
     rgb_matrix::DrawText(canvas, font_, x, y + font_.baseline(),
                          color, nullptr, text_buffer,
                          letter_spacing);

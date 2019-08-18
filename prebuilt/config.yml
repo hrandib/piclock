@@ -1,12 +1,12 @@
 clock:
   font: hoog32.bdf
-  brightness: 5
   color:
     mode: RGB # options - HSV, name
     value: [255, 255, 30]
   format: "%H:%M"
   position: [50, 0]
-  matrix:
-    rows: 64
-    cols: 64
-    chain: 3
+matrix:
+  rows: 64
+  cols: 64
+  chain: 3
+  brightness: 5
