@@ -39,7 +39,6 @@ public:
     void Update(rgb_matrix::FrameCanvas* canvas);
     rgb_matrix::RGBMatrix::Options matrixOptions() const;
     rgb_matrix::RuntimeOptions runtimeOptions() const;
-    Clock& operator=(const Clock&) = default;
 };
 
 #endif // CLOCK_IMPL_H

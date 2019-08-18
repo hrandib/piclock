@@ -168,6 +168,7 @@ Clock::Clock(char** argv)
 
 void Clock::Update(rgb_matrix::FrameCanvas* canvas)
 {
+    char text_buffer[32];
     const int x = x_orig;
     int y = y_orig;
     struct timespec next_time;
@@ -175,7 +176,6 @@ void Clock::Update(rgb_matrix::FrameCanvas* canvas)
     next_time.tv_nsec = 0;
     struct tm tm;
 
-    char text_buffer[256];
     localtime_r(&next_time.tv_sec, &tm);
     strftime(text_buffer, sizeof(text_buffer), time_format, &tm);
     canvas->Fill(bg_color.r, bg_color.g, bg_color.b);

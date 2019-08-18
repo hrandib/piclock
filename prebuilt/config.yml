@@ -1,12 +1,22 @@
-clock:
-  font: hoog32.bdf
-  color:
-    mode: RGB # options - HSV, name
-    value: [255, 255, 30]
-  format: "%H:%M"
-  position: [50, 0]
 matrix:
   rows: 64
   cols: 64
   chain: 3
   brightness: 5
+clock:
+  font: hoog32.bdf
+  color_mode: RGB # options - HSV, name
+  color_value: [255, 255, 30]
+  format: "%H:%M"
+  position: [50, 0]
+sensors:
+  font: hoog10.bdf
+  color_mode: RGB
+  position: [0, 0]
+
+# color settings for each sensor value
+  temperature: [255, 0, 0]
+  humidity: [0, 255, 0]
+  pressure: [0, 0, 255]
+  luminosity: [0, 255, 255]
+  co2: [255, 255, 0]
