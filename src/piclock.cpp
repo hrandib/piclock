@@ -68,12 +68,13 @@ public:
         }
     }
     optional<RGBMatrix::Options> getMatrixOptions() {
-        if(auto node = getNode("matrix"); node) {
+        if(auto optionalNode = getNode("matrix"); optionalNode) {
             try {
-                int rows = node.value()["rows"].as<int>();
-                int cols = node.value()["cols"].as<int>();
-                int chain = node.value()["chain"].as<int>();
-                int brigthness = node.value()["brightness"].as<int>();
+                auto node = optionalNode.value();
+                int rows = node["rows"].as<int>();
+                int cols = node["cols"].as<int>();
+                int chain = node["chain"].as<int>();
+                int brigthness = node["brightness"].as<int>();
                 RGBMatrix::Options options;
                 options.rows = rows;
                 options.cols = cols;
