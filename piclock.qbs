@@ -74,12 +74,22 @@ CppApplication { name: "piclock"
     Group { name: "fonts"
         qbs.install: true
         qbs.installPrefix: project.appPath
+        qbs.installDir: "fonts"
         prefix: "fonts/"
         files: [
             "*.bdf"
         ]
     }
 
+    Group { name: "fonts-aux"
+        qbs.install: true
+        qbs.installPrefix: project.appPath
+        qbs.installDir: "fonts-aux"
+        prefix: "fonts-aux/"
+        files: [
+            "*.bdf"
+        ]
+    }
 
 } //CppApplication
 

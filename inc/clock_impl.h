@@ -23,6 +23,8 @@
 #ifndef CLOCK_IMPL_H
 #define CLOCK_IMPL_H
 
+#include <filesystem>
+
 #include "yaml-cpp/yaml.h"
 #include "led-matrix.h"
 #include "graphics.h"
@@ -31,11 +33,8 @@ class Clock
 {
 private:
     rgb_matrix::Font font_;
-    rgb_matrix::RGBMatrix::Options matrixOptions_;
-    rgb_matrix::RuntimeOptions runtimeOptions_;
 public:
-//    Clock(const YAML::Node& defaultConf);
-    Clock(char** argv);
+    Clock(const std::filesystem::path& execDir, const YAML::Node& clockNode);
     void Update(rgb_matrix::FrameCanvas* canvas);
     rgb_matrix::RGBMatrix::Options matrixOptions() const;
     rgb_matrix::RuntimeOptions runtimeOptions() const;

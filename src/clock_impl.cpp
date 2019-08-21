@@ -25,21 +25,19 @@ using std::string;
 using std::vector;
 using std::invalid_argument;
 using std::to_string;
+using std::filesystem::path;
+using std::filesystem::exists;
 using namespace std::string_literals;
 using namespace rgb_matrix;
-
-int brightness = 10;
 
 namespace  {
 
     string cli_args =
         "app --led-rows=64 --led-cols=64 --led-chain=3 "
-        "-f /home/pi/source/rpi-rgb-led-matrix/fonts-aux/hoog32.bdf -b 5 -C 255,255,30 -d %H:%M -x 50";
+        "-f /home/pi/source/rpi-rgb-led-matrix/fonts-aux/hoog24.bdf -b 5 -C 255,255,30 -d %H:%M -x 105";
 
-    int usage(const char* progname);
     bool parseColor(Color* c, const char* str);
     bool FullSaturation(const Color& c);
-    vector<const char*> simpleSplit(string& str);
 
     const char* time_format = "%H:%M";
     Color color(255, 255, 0);
@@ -47,25 +45,6 @@ namespace  {
     int x_orig = 0;
     int y_orig = 0;
     int letter_spacing = 0;
-
-    int usage(const char* progname)
-    {
-        fprintf(stderr, "usage: %s [options]\n", progname);
-        fprintf(stderr, "Reads text from stdin and displays it. "
-                "Empty string: clear screen\n");
-        fprintf(stderr, "Options:\n");
-        rgb_matrix::PrintMatrixFlags(stderr);
-        fprintf(stderr,
-                "\t-d <time-format>  : Default '%%H:%%M'. See strftime()\n"
-                "\t-f <font-file>    : Use given font.\n"
-                "\t-b <brightness>   : Sets brightness percent. Default: 100.\n"
-                "\t-x <x-origin>     : X-Origin of displaying text (Default: 0)\n"
-                "\t-y <y-origin>     : Y-Origin of displaying text (Default: 0)\n"
-                "\t-S <spacing>      : Spacing pixels between letters (Default: 0)\n"
-                "\t-C <r,g,b>        : Color. Default 255,255,0\n"
-               );
-        return 1;
-    }
 
     bool parseColor(Color* c, const char* str)
     {
@@ -79,90 +58,22 @@ namespace  {
                && (c.b == 0 || c.b == 255);
     }
 
-    vector<const char*> simpleSplit(string& str)
-    {
-        vector<const char*> tokens;
-        if(!str.empty()) {
-            tokens.push_back(str.data());
-            for(size_t pos{}; pos != string::npos;) {
-                pos = str.find(" ", pos);
-                if(pos != string::npos) {
-                    str[pos++] = '\0';
-                    tokens.push_back(&str[pos]);
-                }
-            }
+}
+
+Clock::Clock(const path& execDir, const YAML::Node& clockNode)
+{
+    try {
+        const string fontFile = clockNode["font"].as<string>();
+        path fontPath = execDir / fontFile;
+        std::error_code ec;
+        if(!exists(fontPath, ec)) {
+            throw invalid_argument{"font file doesn't exist: "s + fontPath.c_str()};
         }
-        return tokens;
-    }
-}
-
-rgb_matrix::RGBMatrix::Options Clock::matrixOptions() const
-{
-    return matrixOptions_;
-}
-
-rgb_matrix::RuntimeOptions Clock::runtimeOptions() const
-{
-    return runtimeOptions_;
-}
-
-Clock::Clock(char** argv)
-{
-    auto illegalOption = [&argv](auto msg) {
-        usage(argv[0]);
-      throw invalid_argument{msg};
-    };
-    auto tokens_vec = simpleSplit(cli_args);
-    int tokens_size = static_cast<int>(tokens_vec.size());
-    char** tokens = const_cast<char**>(tokens_vec.data());
-    if(!rgb_matrix::ParseOptionsFromFlags(&tokens_size, &tokens,
-                                          &matrixOptions_, &runtimeOptions_)) {
-        illegalOption("Args parsing failed");
-    }
-
-    const char* bdf_font_file = nullptr;
-
-    int opt;
-    while((opt = getopt(tokens_size, tokens, "x:y:f:C:B:O:b:S:d:")) != -1) {
-        switch(opt) {
-        case 'd':
-            time_format = strdup(optarg);
-            break;
-        case 'b':
-            brightness = atoi(optarg);
-            break;
-        case 'x':
-            x_orig = atoi(optarg);
-            break;
-        case 'y':
-            y_orig = atoi(optarg);
-            break;
-        case 'f':
-            bdf_font_file = strdup(optarg);
-            break;
-        case 'S':
-            letter_spacing = atoi(optarg);
-            break;
-        case 'C':
-            if(!parseColor(&color, optarg)) {
-                illegalOption("Invalid color spec");
-            }
-            break;
-        default:
-            illegalOption("No such option: " + to_string(opt));
+        if(!font_.LoadFont(fontPath.c_str())) {
+            throw invalid_argument("Couldn't load font "s + fontPath.c_str());
         }
-    }
-    if(bdf_font_file == nullptr) {
-        illegalOption("Need to specify BDF font-file with -f");
-    }
-    /*
-     * Load font. This needs to be a filename with a bdf bitmap font.
-     */
-    if(!font_.LoadFont(bdf_font_file)) {
-        illegalOption("Couldn't load font "s + bdf_font_file);
-    }
-    if(brightness < 1 || brightness > 100) {
-        illegalOption("Brightness is outside usable range");
+    } catch(const YAML::BadConversion& ) {
+        throw invalid_argument{"Error reading font from yaml"};
     }
 }
 
