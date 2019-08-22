@@ -67,13 +67,18 @@ Clock::Clock(const path& execDir, const YAML::Node& clockNode)
         path fontPath = execDir / fontFile;
         std::error_code ec;
         if(!exists(fontPath, ec)) {
-            throw invalid_argument{"font file doesn't exist: "s + fontPath.c_str()};
+            throw invalid_argument{"Font file doesn't exist: "s + fontPath.c_str()};
         }
         if(!font_.LoadFont(fontPath.c_str())) {
             throw invalid_argument("Couldn't load font "s + fontPath.c_str());
         }
-    } catch(const YAML::BadConversion& ) {
+        auto [xPos, yPos] = clockNode["position"].as<std::array<int, 2>>();
+        xPos_ = xPos;
+        yPos_ = yPos;
+    } catch(const YAML::TypedBadConversion<string>& ) {
         throw invalid_argument{"Error reading font from yaml"};
+    } catch(const YAML::TypedBadConversion<int>&) {
+        throw invalid_argument{"Error reading position or color from yaml"};
     }
 }
 
