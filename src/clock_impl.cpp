@@ -93,7 +93,7 @@ void Clock::Update(rgb_matrix::FrameCanvas* canvas)
 
     localtime_r(&next_time.tv_sec, &tm);
     strftime(text_buffer, sizeof(text_buffer), timeFormat_.data(), &tm);
-    canvas->Fill(0, 0, 0);
+
     rgb_matrix::DrawText(canvas, font_, xPos_, yPos_ + font_.baseline(),
                          color_, nullptr, text_buffer,
                          letterSpacing);
