@@ -20,6 +20,7 @@
 #include <stdexcept>
 #include <getopt.h>
 #include <string.h>
+#include <iostream>
 
 using std::string;
 using std::vector;
@@ -29,22 +30,9 @@ using std::filesystem::path;
 using std::filesystem::exists;
 using namespace std::string_literals;
 using namespace rgb_matrix;
+using rgb_matrix::Color;
 
-namespace  {
-
-    string cli_args =
-        "app --led-rows=64 --led-cols=64 --led-chain=3 "
-        "-f /home/pi/source/rpi-rgb-led-matrix/fonts-aux/hoog24.bdf -b 5 -C 255,255,30 -d %H:%M -x 105";
-
-    bool parseColor(Color* c, const char* str);
-    bool FullSaturation(const Color& c);
-
-    const char* time_format = "%H:%M";
-    Color color(255, 255, 0);
-    Color bg_color(0, 0, 0);
-    int x_orig = 0;
-    int y_orig = 0;
-    int letter_spacing = 0;
+namespace {
 
     bool parseColor(Color* c, const char* str)
     {
@@ -60,6 +48,12 @@ namespace  {
 
 }
 
+static inline void operator<<(Color& color, const std::array<uint32_t, 3>& arr) {
+    color.r = static_cast<uint8_t>(arr[0]);
+    color.g = static_cast<uint8_t>(arr[1]);
+    color.b = static_cast<uint8_t>(arr[2]);
+}
+
 Clock::Clock(const path& execDir, const YAML::Node& clockNode)
 {
     try {
@@ -72,32 +66,37 @@ Clock::Clock(const path& execDir, const YAML::Node& clockNode)
         if(!font_.LoadFont(fontPath.c_str())) {
             throw invalid_argument("Couldn't load font "s + fontPath.c_str());
         }
-        auto [xPos, yPos] = clockNode["position"].as<std::array<int, 2>>();
-        xPos_ = xPos;
-        yPos_ = yPos;
+        auto pos = clockNode["position"].as<std::array<int32_t, 2>>();
+        xPos_ = pos[0];
+        yPos_ = pos[1];
+        color_ << clockNode["color"].as<std::array<uint32_t, 3>>();
+        timeFormat_ = clockNode["format"].as<string>();
+
     } catch(const YAML::TypedBadConversion<string>& ) {
         throw invalid_argument{"Error reading font from yaml"};
-    } catch(const YAML::TypedBadConversion<int>&) {
-        throw invalid_argument{"Error reading position or color from yaml"};
+    } catch(const YAML::TypedBadConversion<int32_t>&) {
+        throw invalid_argument{"Error reading position from yaml"};
+    } catch(const YAML::TypedBadConversion<uint32_t>&) {
+        throw invalid_argument{"Error reading color from yaml"};
     }
 }
 
 void Clock::Update(rgb_matrix::FrameCanvas* canvas)
 {
+    static const int letterSpacing = 0;
     char text_buffer[32];
-    const int x = x_orig;
-    int y = y_orig;
+
     struct timespec next_time;
     next_time.tv_sec = time(nullptr);
     next_time.tv_nsec = 0;
     struct tm tm;
 
     localtime_r(&next_time.tv_sec, &tm);
-    strftime(text_buffer, sizeof(text_buffer), time_format, &tm);
-    canvas->Fill(bg_color.r, bg_color.g, bg_color.b);
-    rgb_matrix::DrawText(canvas, font_, x, y + font_.baseline(),
-                         color, nullptr, text_buffer,
-                         letter_spacing);
+    strftime(text_buffer, sizeof(text_buffer), timeFormat_.data(), &tm);
+    canvas->Fill(0, 0, 0);
+    rgb_matrix::DrawText(canvas, font_, xPos_, yPos_ + font_.baseline(),
+                         color_, nullptr, text_buffer,
+                         letterSpacing);
     // Wait until we're ready to show it.
     clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &next_time, nullptr);
     next_time.tv_sec += 1;

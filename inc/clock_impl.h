@@ -33,7 +33,9 @@ class Clock
 {
 private:
     rgb_matrix::Font font_;
-    int xPos_, yPos_;
+    int32_t xPos_, yPos_;
+    rgb_matrix::Color color_;
+    std::string timeFormat_;
 public:
     Clock(const std::filesystem::path& execDir, const YAML::Node& clockNode);
     void Update(rgb_matrix::FrameCanvas* canvas);

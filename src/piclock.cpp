@@ -118,7 +118,7 @@ int main(int /*argc*/, char* argv[])
     try {
         clock = std::make_unique<Clock>(opts.GetExecDir(), *opts.GetClockNode());
     } catch (const std::invalid_argument& e) {
-        std::cerr << e.what();
+        std::cerr << e.what() << endl;
         return 1;
     }
     RGBMatrix* matrix{};

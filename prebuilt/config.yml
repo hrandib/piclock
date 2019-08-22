@@ -2,13 +2,13 @@ matrix:
   rows: 64
   cols: 64
   chain: 3
-  brightness: 5
+  brightness: 3
 clock:
   font: fonts-aux/hoog24.bdf
   color_mode: RGB # options - HSV, name
-  color_value: [255, 255, 30]
+  color: [255, 255, 30]
   format: "%H:%M"
-  position: [10, 0]
+  position: [105, 0]
 sensors:
   font: hoog10.bdf
   color_mode: RGB
