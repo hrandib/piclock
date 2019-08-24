@@ -48,11 +48,29 @@ namespace {
 
 }
 
-static inline void operator<<(Color& color, const std::array<uint32_t, 3>& arr) {
-    color.r = static_cast<uint8_t>(arr[0]);
-    color.g = static_cast<uint8_t>(arr[1]);
-    color.b = static_cast<uint8_t>(arr[2]);
-}
+namespace YAML {
+    template<>
+    struct convert<Color> {
+      static Node encode(const Color& rhs) {
+        Node node;
+        node.push_back(rhs.r);
+        node.push_back(rhs.g);
+        node.push_back(rhs.b);
+        return node;
+      }
+
+      static bool decode(const Node& node, Color& rhs) {
+        if(!node.IsSequence() || node.size() != 3) {
+          return false;
+        }
+
+        rhs.r = static_cast<uint8_t>(node[0].as<uint32_t>());
+        rhs.g = static_cast<uint8_t>(node[1].as<uint32_t>());
+        rhs.b = static_cast<uint8_t>(node[2].as<uint32_t>());
+        return true;
+      }
+    };
+} //YAML
 
 Clock::Clock(const path& execDir, const YAML::Node& clockNode)
 {
@@ -69,7 +87,7 @@ Clock::Clock(const path& execDir, const YAML::Node& clockNode)
         auto pos = clockNode["position"].as<std::array<int32_t, 2>>();
         xPos_ = pos[0];
         yPos_ = pos[1];
-        color_ << clockNode["color"].as<std::array<uint32_t, 3>>();
+        color_ = clockNode["color"].as<Color>();
         timeFormat_ = clockNode["format"].as<string>();
 
     } catch(const YAML::TypedBadConversion<string>& ) {
