@@ -75,7 +75,7 @@ CppApplication { name: "piclock"
         qbs.install: true
         qbs.installPrefix: project.appPath
         qbs.installDir: "fonts"
-        prefix: "fonts/"
+        prefix: "rpi-rgb-led-matrix/fonts/"
         files: [
             "*.bdf"
         ]
