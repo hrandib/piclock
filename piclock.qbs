@@ -14,7 +14,7 @@ Product { name: "cppOptions"
 
         Depends { name: "cpp" }
 
-        cpp.optimization: "fast"
+        cpp.optimization: "small"
         cpp.debugInformation: false
         cpp.includePaths: [
             "inc",
@@ -53,6 +53,7 @@ CppApplication { name: "piclock"
         prefix: "inc/"
         files: [
             "clock_impl.h",
+            "options.h",
         ]
     }
 

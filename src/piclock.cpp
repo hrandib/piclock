@@ -23,6 +23,7 @@
 #include "led-matrix.h"
 #include "graphics.h"
 #include "yaml-cpp/yaml.h"
+#include "options.h"
 #include "clock_impl.h"
 
 #include <signal.h>
@@ -32,28 +33,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <string>
-#include <utility>
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <filesystem>
-#include <stdexcept>
-#include <memory>
-#include <optional>
-#include <experimental/source_location>
-
-using std::string;
-using std::pair;
-using std::vector;
-using std::cout;
-using std::endl;
-using std::optional;
-using std::filesystem::path;
-using std::experimental::source_location;
 using rgb_matrix::FrameCanvas;
 using rgb_matrix::RGBMatrix;
-using rgb_matrix::RuntimeOptions;
 
 static volatile bool interrupt_received = false;
 static void InterruptHandler(int /*signo*/)
@@ -62,73 +43,6 @@ static void InterruptHandler(int /*signo*/)
 }
 
 using namespace std;
-
-class Options
-{
-private:
-    YAML::Node rootNode_;
-    path execDir_;
-
-    optional<YAML::Node> getNode(const string& nodeName) const {
-        try {
-            YAML::Node node = rootNode_[nodeName];
-            if(node.IsDefined()) {
-                return std::make_optional(node);
-            }
-        } catch(const YAML::InvalidNode&) {
-            return {};
-        }
-        return {};
-    }
-
-public:
-    Options(const char* programPath, const char* configFileName = "config.yml") {
-        path execPath{programPath};
-        execDir_ = execPath.remove_filename();
-        auto configPath = execPath.replace_filename(configFileName);
-        cout << "Used config file: " << configPath << endl;
-        rootNode_ = YAML::LoadFile(configPath);
-        if(!rootNode_.IsDefined()) {
-            throw YAML::Exception{YAML::Mark::null_mark(), "Root node not found"};
-        }
-    }
-
-    optional<RGBMatrix::Options> GetMatrixOptions() {
-        if(auto optionalNode = getNode("matrix"); optionalNode) {
-            try {
-                auto node = optionalNode.value();
-                int rows = node["rows"].as<int>();
-                int cols = node["cols"].as<int>();
-                int chain = node["chain"].as<int>();
-                int brigthness = node["brightness"].as<int>();
-                RGBMatrix::Options options;
-                options.rows = rows;
-                options.cols = cols;
-                options.chain_length = chain;
-                options.brightness = brigthness;
-                if(options.Validate(nullptr)) {
-                    return std::make_optional(options);
-                }
-            } catch (const YAML::Exception&) {
-                return {};
-            }
-        }
-        return {};
-    }
-
-    optional<RuntimeOptions> GetRuntimeOptions() {
-        return std::make_optional(RuntimeOptions{});
-    }
-
-    std::optional<YAML::Node> GetClockNode() const {
-        return getNode("clock");
-    }
-
-    const path& GetExecDir() const
-    {
-        return execDir_;
-    }
-};
 
 int main(int /*argc*/, char* argv[])
 {
@@ -145,7 +59,7 @@ int main(int /*argc*/, char* argv[])
     }
     RGBMatrix* matrix{};
     if(auto matrixOpts = opts.GetMatrixOptions(); matrixOpts) {
-        matrix = rgb_matrix::CreateMatrixFromOptions(*opts.GetMatrixOptions(), RuntimeOptions{});
+        matrix = rgb_matrix::CreateMatrixFromOptions(*opts.GetMatrixOptions(), *opts.GetRuntimeOptions());
     }
     if(matrix == nullptr) {
         std::cerr << "The matrix creation failed";
