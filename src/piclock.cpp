@@ -57,11 +57,12 @@ int main(int /*argc*/, char* argv[])
         std::cerr << e.what() << endl;
         return 1;
     }
-    RGBMatrix* matrix{};
+    unique_ptr<RGBMatrix> matrix;
     if(auto matrixOpts = opts.GetMatrixOptions(); matrixOpts) {
-        matrix = rgb_matrix::CreateMatrixFromOptions(*opts.GetMatrixOptions(), *opts.GetRuntimeOptions());
+        auto ptr = rgb_matrix::CreateMatrixFromOptions(*opts.GetMatrixOptions(), *opts.GetRuntimeOptions());
+        matrix.reset(ptr);
     }
-    if(matrix == nullptr) {
+    if(!matrix) {
         std::cerr << "The matrix creation failed";
         return 1;
     }
@@ -75,7 +76,6 @@ int main(int /*argc*/, char* argv[])
     }
     // Finished. Shut down the RGB matrix.
     matrix->Clear();
-    delete matrix;
     write(STDOUT_FILENO, "\n", 1);  // Create a fresh new line after ^C on screen
     return 0;
 }
