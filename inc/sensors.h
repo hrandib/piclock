@@ -26,11 +26,115 @@
 
 #include "common.h"
 
-class SensorBase {
+enum class SensorType {
+    TEMPERATURE,
+    HUMIDITY,
+    LUMINOSITY,
+    PRESSURE,
 
+    MAX_VAL
 };
 
-class SensorHub {
+inline const char* const UNITS[size_t(SensorType::MAX_VAL)] = { "℃", "%H", "lux", "hPa" };
+
+struct SensorDescriptor {
+    std::string sensorName;
+    SensorType sensorType;
+    std::string valueName_;
+    std::filesystem::path sensorPath;
+};
+
+const inline std::array<SensorDescriptor, 5> DESCRIPTORS = {{
+    { "bh1750", SensorType::LUMINOSITY, "in_illuminance_raw", {} },
+    { "bmp280", SensorType::PRESSURE, "x", {} },
+    { "bmp280", SensorType::TEMPERATURE, "x", {} },
+    { "hdc1080", SensorType::HUMIDITY, "x", {} },
+    { "hdc1080", SensorType::TEMPERATURE, "x", {} },
+}};
+
+
+class Sensor {
+public:
+    using path = std::filesystem::path;
+    using string = std::string;
+    using string_view = std::string_view;
+    using fstream = std::ifstream;
+
+    Sensor(const SensorDescriptor& desc) : senseDesc_{desc} {
+
+    }
+
+    const string& GetName() {
+        return senseDesc_.sensorName;
+    }
+
+    SensorType GetType() {
+        return senseDesc_.sensorType;
+    }
+
+    string GetFormattedValue() {
+        return {};
+    }
+
+private:
+    const SensorDescriptor senseDesc_;
+
+    string ReadValue() {
+
+    }
+};
+
+class SensorHub final {
+private:
+    using Node = YAML::Node;
+    using fstream = std::ifstream;
+    using string = std::string;
+    using string_view = std::string_view;
+    using dir_iterator = std::filesystem::directory_iterator;
+    using path = std::filesystem::path;
+    using pathMap = std::map<string, path>;
+
+    static constexpr string_view SENSORS_ROOT = "/sys/bus/iio/devices";
+
+    std::vector<Sensor> sensors_;
+public:
+    SensorHub(/*const Node& sensorConfigNode*/) : sensors_{} {
+        for(const auto& [name, path] : GetAvailableSensors()) {
+            std::cout << name << "   " << path.c_str() << std::endl;
+            for(const auto& desc : DESCRIPTORS) {
+                if (desc.sensorName == name) {
+                    auto tempDesc = desc;
+                    tempDesc.sensorPath = path;
+                    sensors_.emplace_back(tempDesc);
+                }
+            }
+        }
+        for(auto& sensor : sensors_) {
+            std::cout << sensor.GetName() << "   " << (uint32_t)sensor.GetType() << std::endl;
+        }
+    }
+
+private:
+    pathMap GetAvailableSensors() {
+        pathMap result;
+        for(const path& dir : dir_iterator{SENSORS_ROOT}) {
+            if(string name = GetSensorName(dir); !name.empty()) {
+                result[name] = dir;
+            }
+        }
+        return result;
+    }
+
+    string GetSensorName(const path& sensorPath) {
+        try {
+            fstream file{sensorPath/"name"};
+            string result;
+            file >> result;
+            return result;
+        } catch(const std::exception&) {
+            return {};
+        }
+    }
 
 };
 

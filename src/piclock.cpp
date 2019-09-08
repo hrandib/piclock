@@ -22,6 +22,7 @@
 
 #include "common.h"
 #include "clock_impl.h"
+#include "sensors.h"
 
 #include <signal.h>
 #include <stdio.h>
@@ -46,6 +47,7 @@ int main(int /*argc*/, char* argv[])
     signal(SIGTERM, InterruptHandler);
     signal(SIGINT, InterruptHandler);
 
+    SensorHub hub{};
     Options opts{argv[0]};
     std::unique_ptr<Clock> clock;
     try {
