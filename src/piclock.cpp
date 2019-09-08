@@ -20,10 +20,7 @@
  * SOFTWARE.
  */
 
-#include "led-matrix.h"
-#include "graphics.h"
-#include "yaml-cpp/yaml.h"
-#include "options.h"
+#include "common.h"
 #include "clock_impl.h"
 
 #include <signal.h>

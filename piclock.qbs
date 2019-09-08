@@ -21,10 +21,10 @@ Product { name: "cppOptions"
             "yaml-cpp/include"
         ]
         cpp.cFlags: [
-            "-std=gnu11"
+            "-std=c11"
         ]
         cpp.cxxFlags: [
-            "-std=gnu++17"
+            "-std=c++17"
         ]
         cpp.linkerFlags: [
             "-lpthread"
@@ -53,7 +53,9 @@ CppApplication { name: "piclock"
         prefix: "inc/"
         files: [
             "clock_impl.h",
+            "common.h",
             "options.h",
+            "sensors.h",
         ]
     }
 

@@ -19,24 +19,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#ifndef COMMON_H
+#define COMMON_H
 
-#ifndef CLOCK_IMPL_H
-#define CLOCK_IMPL_H
+#include "led-matrix.h"
+#include "graphics.h"
+#include "yaml-cpp/yaml.h"
+#include "options.h"
 
-#include "common.h"
-
-class Clock
-{
-private:
-    rgb_matrix::Font font_;
-    int32_t xPos_, yPos_;
-    rgb_matrix::Color color_;
-    std::string timeFormat_;
-public:
-    Clock(const std::filesystem::path& execDir, const YAML::Node& clockNode);
-    void Update(rgb_matrix::FrameCanvas* canvas);
-    rgb_matrix::RGBMatrix::Options matrixOptions() const;
-    rgb_matrix::RuntimeOptions runtimeOptions() const;
-};
-
-#endif // CLOCK_IMPL_H
+#endif // COMMON_H
