@@ -35,8 +35,6 @@ private:
 public:
     Clock(const std::filesystem::path& execDir, const YAML::Node& clockNode);
     void Update(rgb_matrix::FrameCanvas* canvas);
-    rgb_matrix::RGBMatrix::Options matrixOptions() const;
-    rgb_matrix::RuntimeOptions runtimeOptions() const;
 };
 
 #endif // CLOCK_IMPL_H

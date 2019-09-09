@@ -25,6 +25,8 @@
 // It is assumed that all sensors already existed in sysfs-iio
 
 #include "common.h"
+#include <chrono>
+#include <thread>
 
 enum class SensorType {
     TEMPERATURE,
@@ -40,7 +42,7 @@ inline const char* const UNITS[size_t(SensorType::MAX_VAL)] = { "℃", "%H", "lu
 struct SensorDescriptor {
     std::string sensorName;
     SensorType sensorType;
-    std::string valueName_;
+    std::string valueName;
     std::filesystem::path sensorPath;
 };
 
@@ -60,9 +62,8 @@ public:
     using string_view = std::string_view;
     using fstream = std::ifstream;
 
-    Sensor(const SensorDescriptor& desc) : senseDesc_{desc} {
-
-    }
+    Sensor(const SensorDescriptor& desc) : senseDesc_{desc}, fstream_{desc.sensorPath/desc.valueName}
+    {  }
 
     const string& GetName() {
         return senseDesc_.sensorName;
@@ -72,17 +73,41 @@ public:
         return senseDesc_.sensorType;
     }
 
+    const path& GetSensorPath() {
+        return senseDesc_.sensorPath;
+    }
+
+    const string& GetValueName() {
+        return senseDesc_.valueName;
+    }
+
     string GetFormattedValue() {
-        return {};
+        return ReadValue() + " " + UNITS[size_t(GetType())];
     }
 
 private:
     const SensorDescriptor senseDesc_;
+    fstream fstream_;
+
 
     string ReadValue() {
-
+        string result;
+        try {
+            fstream_ >> result;
+            fstream_.seekg(0);
+        } catch(const std::exception& e) {
+            std::cerr << "Read failed for" << GetName() << "  " << e.what() << std::endl;
+            fstream_.close();
+            fstream_.open(GetSensorPath()/GetValueName());
+            if(!fstream_) {
+                std::cerr << "Retry open failed" << std::endl;
+            }
+        }
+        return result;
     }
 };
+
+using ms = std::chrono::milliseconds;
 
 class SensorHub final {
 private:
@@ -113,6 +138,8 @@ public:
             std::cout << sensor.GetName() << "   " << (uint32_t)sensor.GetType() << std::endl;
         }
     }
+
+    void Update(rgb_matrix::FrameCanvas* canvas);
 
 private:
     pathMap GetAvailableSensors() {
