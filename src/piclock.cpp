@@ -47,11 +47,12 @@ int main(int /*argc*/, char* argv[])
     signal(SIGTERM, InterruptHandler);
     signal(SIGINT, InterruptHandler);
 
-    SensorHub hub{};
     Options opts{argv[0]};
+    MainWidget mainWidget;
+    SensorHub hub{mainWidget};
     std::unique_ptr<Clock> clock;
     try {
-        clock = std::make_unique<Clock>(opts.GetExecDir(), *opts.GetClockNode());
+        clock = std::make_unique<Clock>(opts.GetExecDir(), *opts.GetClockNode(), mainWidget);
     } catch (const std::invalid_argument& e) {
         std::cerr << e.what() << endl;
         return 1;
@@ -65,11 +66,14 @@ int main(int /*argc*/, char* argv[])
         std::cerr << "The matrix creation failed";
         return 1;
     }
+
+    mainWidget.AddWidget(hub);
+    mainWidget.AddWidget(*clock);
     FrameCanvas* offscreen = matrix->CreateFrameCanvas();
 
     while(!interrupt_received) {
         offscreen->Fill(0, 0, 0);
-        clock->Update(offscreen);
+        mainWidget.Draw(offscreen);
         // Atomic swap with double buffer
         offscreen = matrix->SwapOnVSync(offscreen);
     }

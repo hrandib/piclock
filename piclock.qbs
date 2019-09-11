@@ -45,6 +45,7 @@ CppApplication { name: "piclock"
         prefix: "src/"
         files: [
             "clock_impl.cpp",
+            "ledwidget.cpp",
             "piclock.cpp",
         ]
     }
@@ -54,6 +55,7 @@ CppApplication { name: "piclock"
         files: [
             "clock_impl.h",
             "common.h",
+            "ledwidget.h",
             "options.h",
             "sensors.h",
         ]

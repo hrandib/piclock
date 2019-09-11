@@ -19,15 +19,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef COMMON_H
-#define COMMON_H
-
-#include "led-matrix.h"
-#include "graphics.h"
-#include "yaml-cpp/yaml.h"
-#include "options.h"
 #include "ledwidget.h"
 
-using PositionType = std::array<int32_t, 2>;
+BaseWidget::~BaseWidget() = default;
 
-#endif // COMMON_H
+WidgetWrapper::WidgetWrapper(BaseWidget &widget) : widget_{widget}
+{ }
+
+void WidgetWrapper::RequestUpdate() {
+    widget_.RequestUpdate();
+}

@@ -25,16 +25,16 @@
 
 #include "common.h"
 
-class Clock
+class Clock : public WidgetWrapper
 {
 private:
     rgb_matrix::Font font_;
-    int32_t xPos_, yPos_;
-    rgb_matrix::Color color_;
+    PositionType position_;
     std::string timeFormat_;
+    rgb_matrix::Color color_;
 public:
-    Clock(const std::filesystem::path& execDir, const YAML::Node& clockNode);
-    void Update(rgb_matrix::FrameCanvas* canvas);
+    Clock(const std::filesystem::path& execDir, const YAML::Node& clockNode, BaseWidget& widget);
+    void Draw(rgb_matrix::FrameCanvas* canvas) final;
 };
 
 #endif // CLOCK_IMPL_H

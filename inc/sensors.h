@@ -62,7 +62,9 @@ public:
     using string_view = std::string_view;
     using fstream = std::ifstream;
 
-    Sensor(const SensorDescriptor& desc) : senseDesc_{desc}, fstream_{desc.sensorPath/desc.valueName}
+    Sensor(const SensorDescriptor& desc, PositionType position) : senseDesc_{desc},
+        fstream_{desc.sensorPath/desc.valueName},
+        position_{position}
     {  }
 
     const string& GetName() {
@@ -85,10 +87,14 @@ public:
         return ReadValue() + " " + UNITS[size_t(GetType())];
     }
 
+    const PositionType& GetPosition() {
+        return position_;
+    }
+
 private:
     const SensorDescriptor senseDesc_;
     fstream fstream_;
-
+    const PositionType position_;
 
     string ReadValue() {
         string result;
@@ -109,7 +115,7 @@ private:
 
 using ms = std::chrono::milliseconds;
 
-class SensorHub final {
+class SensorHub final : public WidgetWrapper {
 private:
     using Node = YAML::Node;
     using fstream = std::ifstream;
@@ -123,23 +129,28 @@ private:
 
     std::vector<Sensor> sensors_;
 public:
-    SensorHub(/*const Node& sensorConfigNode*/) : sensors_{} {
+    SensorHub(BaseWidget& widget/*, const Node& sensorConfigNode*/) : WidgetWrapper{widget}, sensors_{} {
         for(const auto& [name, path] : GetAvailableSensors()) {
             std::cout << name << "   " << path.c_str() << std::endl;
             for(const auto& desc : DESCRIPTORS) {
                 if (desc.sensorName == name) {
                     auto tempDesc = desc;
                     tempDesc.sensorPath = path;
-                    sensors_.emplace_back(tempDesc);
+                    sensors_.emplace_back(tempDesc, PositionType{});
                 }
             }
         }
         for(auto& sensor : sensors_) {
             std::cout << sensor.GetName() << "   " << (uint32_t)sensor.GetType() << std::endl;
         }
+
     }
 
-    void Update(rgb_matrix::FrameCanvas* canvas);
+    void Draw(rgb_matrix::FrameCanvas* canvas) final {
+        for(auto& sensor : sensors_) {
+            (void)sensor;
+        }
+    }
 
 private:
     pathMap GetAvailableSensors() {

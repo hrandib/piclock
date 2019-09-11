@@ -19,15 +19,57 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef COMMON_H
-#define COMMON_H
+#ifndef LEDWIDGET_H
+#define LEDWIDGET_H
 
 #include "led-matrix.h"
-#include "graphics.h"
-#include "yaml-cpp/yaml.h"
-#include "options.h"
-#include "ledwidget.h"
+#include <mutex>
+#include <condition_variable>
 
-using PositionType = std::array<int32_t, 2>;
+struct BaseWidget {
+    virtual void Draw(rgb_matrix::FrameCanvas* canvas) = 0;
+    virtual void RequestUpdate() = 0;
+    virtual ~BaseWidget();
+};
 
-#endif // COMMON_H
+class WidgetWrapper : public BaseWidget {
+public:
+    WidgetWrapper(BaseWidget& widget);
+    void RequestUpdate() final;
+private:
+    BaseWidget& widget_;
+};
+
+class MainWidget : public BaseWidget {
+public:
+    using WidgetVector = std::vector<BaseWidget*>;
+
+    void AddWidgets(WidgetVector& widgets) {
+        if(widgets_.empty()) {
+            widgets_ = std::move(widgets);
+        }
+        else {
+            widgets_.insert(widgets_.end(), widgets.begin(), widgets.end());
+        }
+    }
+
+    void AddWidget(BaseWidget& widget) {
+        widgets_.push_back(&widget);
+    }
+
+    void Draw(rgb_matrix::FrameCanvas *canvas) final {
+        for(BaseWidget* widget : widgets_) {
+            widget->Draw(canvas);
+        }
+    }
+
+    void RequestUpdate() final {
+
+    }
+
+private:
+    WidgetVector widgets_{};
+    std::mutex mtx_{};
+};
+
+#endif // LEDWIDGET_H

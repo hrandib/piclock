@@ -72,7 +72,7 @@ namespace YAML {
     };
 } //YAML
 
-Clock::Clock(const path& execDir, const YAML::Node& clockNode)
+Clock::Clock(const path& execDir, const YAML::Node& clockNode, BaseWidget& widget) : WidgetWrapper{widget}
 {
     try {
         const string fontFile = clockNode["font"].as<string>();
@@ -84,9 +84,7 @@ Clock::Clock(const path& execDir, const YAML::Node& clockNode)
         if(!font_.LoadFont(fontPath.c_str())) {
             throw invalid_argument("Couldn't load font "s + fontPath.c_str());
         }
-        auto pos = clockNode["position"].as<std::array<int32_t, 2>>();
-        xPos_ = pos[0];
-        yPos_ = pos[1];
+        position_ = clockNode["position"].as<PositionType>();
         color_ = clockNode["color"].as<Color>();
         timeFormat_ = clockNode["format"].as<string>();
 
@@ -99,7 +97,7 @@ Clock::Clock(const path& execDir, const YAML::Node& clockNode)
     }
 }
 
-void Clock::Update(rgb_matrix::FrameCanvas* canvas)
+void Clock::Draw(rgb_matrix::FrameCanvas* canvas)
 {
     static const int letterSpacing = 0;
     char text_buffer[32];
@@ -112,7 +110,7 @@ void Clock::Update(rgb_matrix::FrameCanvas* canvas)
     localtime_r(&next_time.tv_sec, &tm);
     strftime(text_buffer, sizeof(text_buffer), timeFormat_.data(), &tm);
 
-    rgb_matrix::DrawText(canvas, font_, xPos_, yPos_ + font_.baseline(),
+    rgb_matrix::DrawText(canvas, font_, position_[0], position_[1] + font_.baseline(),
                          color_, nullptr, text_buffer,
                          letterSpacing);
     // Wait until we're ready to show it.

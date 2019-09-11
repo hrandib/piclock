@@ -102,6 +102,11 @@ public:
         return getNode("clock");
     }
 
+    std::optional<YAML::Node> GetSensorNode() const {
+        return getNode("sensors");
+    }
+
+
     const path& GetExecDir() const
     {
         return execDir_;
