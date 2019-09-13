@@ -24,7 +24,6 @@
 
 using std::string;
 using std::vector;
-using std::invalid_argument;
 using std::to_string;
 using std::filesystem::path;
 using std::filesystem::exists;
@@ -74,6 +73,12 @@ namespace YAML {
 
 Clock::Clock(const path& execDir, const YAML::Node& clockNode, BaseWidget& widget) : WidgetWrapper{widget}
 {
+    class invalid_argument : public std::invalid_argument {
+    public:
+        invalid_argument(const string& msg) : std::invalid_argument{"Clock -> " + msg}
+        { }
+    };
+
     try {
         const string fontFile = clockNode["font"].as<string>();
         path fontPath = execDir / fontFile;

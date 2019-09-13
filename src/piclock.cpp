@@ -49,26 +49,25 @@ int main(int /*argc*/, char* argv[])
 
     Options opts{argv[0]};
     MainWidget mainWidget;
-    SensorHub hub{mainWidget};
-    std::unique_ptr<Clock> clock;
+    unique_ptr<RGBMatrix> matrix;
     try {
-        clock = std::make_unique<Clock>(opts.GetExecDir(), *opts.GetClockNode(), mainWidget);
+        Clock clock{opts.GetExecDir(), *opts.GetClockNode(), mainWidget};
+        SensorHub hub{mainWidget};
+        if(auto matrixOpts = opts.GetMatrixOptions(); matrixOpts) {
+            auto ptr = rgb_matrix::CreateMatrixFromOptions(*opts.GetMatrixOptions(), *opts.GetRuntimeOptions());
+            matrix.reset(ptr);
+        }
+        if(!matrix) {
+            std::cerr << "The matrix creation failed";
+            return 1;
+        }
+        mainWidget.AddWidget(hub);
+        mainWidget.AddWidget(clock);
     } catch (const std::invalid_argument& e) {
         std::cerr << e.what() << endl;
         return 1;
     }
-    unique_ptr<RGBMatrix> matrix;
-    if(auto matrixOpts = opts.GetMatrixOptions(); matrixOpts) {
-        auto ptr = rgb_matrix::CreateMatrixFromOptions(*opts.GetMatrixOptions(), *opts.GetRuntimeOptions());
-        matrix.reset(ptr);
-    }
-    if(!matrix) {
-        std::cerr << "The matrix creation failed";
-        return 1;
-    }
 
-    mainWidget.AddWidget(hub);
-    mainWidget.AddWidget(*clock);
     FrameCanvas* offscreen = matrix->CreateFrameCanvas();
 
     while(!interrupt_received) {
