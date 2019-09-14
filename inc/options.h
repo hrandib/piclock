@@ -34,6 +34,8 @@
 #include <string>
 #include <iostream>
 
+using OptionalNode = std::optional<YAML::Node>;
+
 class Options
 {
 private:
@@ -47,18 +49,6 @@ private:
     YAML::Node rootNode_;
     path execDir_;
 
-    optional<YAML::Node> getNode(const string& nodeName) const {
-        try {
-            YAML::Node node = rootNode_[nodeName];
-            if(node.IsDefined()) {
-                return std::make_optional(node);
-            }
-        } catch(const YAML::InvalidNode&) {
-            return {};
-        }
-        return {};
-    }
-
 public:
     Options(const char* programPath, const char* configFileName = "config.yml") {
         path execPath{programPath};
@@ -71,8 +61,8 @@ public:
         }
     }
 
-    optional<RGBMatrix::Options> GetMatrixOptions() {
-        if(auto optionalNode = getNode("matrix"); optionalNode) {
+    optional<RGBMatrix::Options> GetMatrixOptions() const {
+        if(auto optionalNode = GetNode("matrix"); optionalNode) {
             try {
                 auto node = optionalNode.value();
                 int rows = node["rows"].as<int>();
@@ -94,22 +84,25 @@ public:
         return {};
     }
 
-    optional<RuntimeOptions> GetRuntimeOptions() {
+    optional<RuntimeOptions> GetRuntimeOptions() const {
         return std::make_optional(RuntimeOptions{});
     }
-
-    std::optional<YAML::Node> GetClockNode() const {
-        return getNode("clock");
-    }
-
-    std::optional<YAML::Node> GetSensorNode() const {
-        return getNode("sensors");
-    }
-
 
     const path& GetExecDir() const
     {
         return execDir_;
+    }
+
+    OptionalNode GetNode(const string& nodeName) const {
+        try {
+            YAML::Node node = rootNode_[nodeName];
+            if(node.IsDefined()) {
+                return std::make_optional(node);
+            }
+        } catch(const YAML::InvalidNode&) {
+            return {};
+        }
+        return {};
     }
 };
 

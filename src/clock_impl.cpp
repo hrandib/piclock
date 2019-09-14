@@ -47,31 +47,7 @@ namespace {
 
 }
 
-namespace YAML {
-    template<>
-    struct convert<Color> {
-      static Node encode(const Color& rhs) {
-        Node node;
-        node.push_back(rhs.r);
-        node.push_back(rhs.g);
-        node.push_back(rhs.b);
-        return node;
-      }
-
-      static bool decode(const Node& node, Color& rhs) {
-        if(!node.IsSequence() || node.size() != 3) {
-          return false;
-        }
-
-        rhs.r = static_cast<uint8_t>(node[0].as<uint32_t>());
-        rhs.g = static_cast<uint8_t>(node[1].as<uint32_t>());
-        rhs.b = static_cast<uint8_t>(node[2].as<uint32_t>());
-        return true;
-      }
-    };
-} //YAML
-
-Clock::Clock(const path& execDir, const YAML::Node& clockNode, BaseWidget& widget) : WidgetWrapper{widget}
+Clock::Clock(const Options& options, BaseWidget& widget) : WidgetWrapper{widget}
 {
     class invalid_argument : public std::invalid_argument {
     public:
@@ -80,8 +56,13 @@ Clock::Clock(const path& execDir, const YAML::Node& clockNode, BaseWidget& widge
     };
 
     try {
+        OptionalNode optionalNode = options.GetNode("clock");
+        if(!optionalNode) {
+            throw std::invalid_argument("Configuration node not found");
+        }
+        Node clockNode = *optionalNode;
         const string fontFile = clockNode["font"].as<string>();
-        path fontPath = execDir / fontFile;
+        path fontPath = options.GetExecDir() / fontFile;
         std::error_code ec;
         if(!exists(fontPath, ec)) {
             throw invalid_argument{"Font file doesn't exist: "s + fontPath.c_str()};

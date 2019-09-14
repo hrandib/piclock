@@ -28,13 +28,16 @@
 class Clock : public WidgetWrapper
 {
 private:
+    using Node = YAML::Node;
+    using FrameCanvas = rgb_matrix::FrameCanvas;
+
     rgb_matrix::Font font_;
     PositionType position_;
     std::string timeFormat_;
     rgb_matrix::Color color_;
 public:
-    Clock(const std::filesystem::path& execDir, const YAML::Node& clockNode, BaseWidget& widget);
-    void Draw(rgb_matrix::FrameCanvas* canvas) final;
+    Clock(const Options& options, BaseWidget& widget);
+    void Draw(FrameCanvas* canvas) final;
 };
 
 #endif // CLOCK_IMPL_H

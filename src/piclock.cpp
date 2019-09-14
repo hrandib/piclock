@@ -51,8 +51,11 @@ int main(int /*argc*/, char* argv[])
     MainWidget mainWidget;
     unique_ptr<RGBMatrix> matrix;
     try {
-        Clock clock{opts.GetExecDir(), *opts.GetClockNode(), mainWidget};
-        SensorHub hub{mainWidget};
+        WidgetPtr clock = std::make_unique<Clock>(opts, mainWidget);
+        WidgetPtr hub = std::make_unique<SensorHub>(opts, mainWidget);
+
+        mainWidget.AddWidgets(hub, clock);
+
         if(auto matrixOpts = opts.GetMatrixOptions(); matrixOpts) {
             auto ptr = rgb_matrix::CreateMatrixFromOptions(*opts.GetMatrixOptions(), *opts.GetRuntimeOptions());
             matrix.reset(ptr);
@@ -61,8 +64,6 @@ int main(int /*argc*/, char* argv[])
             std::cerr << "The matrix creation failed";
             return 1;
         }
-        mainWidget.AddWidget(hub);
-        mainWidget.AddWidget(clock);
     } catch (const std::invalid_argument& e) {
         std::cerr << e.what() << endl;
         return 1;

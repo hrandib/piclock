@@ -30,4 +30,31 @@
 
 using PositionType = std::array<int32_t, 2>;
 
+namespace YAML {
+
+    using rgb_matrix::Color;
+
+    template<>
+    struct convert<Color> {
+      static Node encode(const Color& rhs) {
+        Node node;
+        node.push_back(rhs.r);
+        node.push_back(rhs.g);
+        node.push_back(rhs.b);
+        return node;
+      }
+
+      static bool decode(const Node& node, Color& rhs) {
+        if(!node.IsSequence() || node.size() != 3) {
+          return false;
+        }
+
+        rhs.r = static_cast<uint8_t>(node[0].as<uint32_t>());
+        rhs.g = static_cast<uint8_t>(node[1].as<uint32_t>());
+        rhs.b = static_cast<uint8_t>(node[2].as<uint32_t>());
+        return true;
+      }
+    };
+} //YAML
+
 #endif // COMMON_H

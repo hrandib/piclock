@@ -24,13 +24,15 @@
 
 #include "led-matrix.h"
 #include <mutex>
-#include <condition_variable>
+#include <memory>
 
 struct BaseWidget {
     virtual void Draw(rgb_matrix::FrameCanvas* canvas) = 0;
     virtual void RequestUpdate() = 0;
     virtual ~BaseWidget();
 };
+
+using WidgetPtr = std::unique_ptr<BaseWidget>;
 
 class WidgetWrapper : public BaseWidget {
 public:
@@ -42,23 +44,22 @@ private:
 
 class MainWidget : public BaseWidget {
 public:
-    using WidgetVector = std::vector<BaseWidget*>;
+    using WidgetVector = std::vector<WidgetPtr>;
 
-    void AddWidgets(WidgetVector& widgets) {
-        if(widgets_.empty()) {
-            widgets_ = std::move(widgets);
-        }
-        else {
-            widgets_.insert(widgets_.end(), widgets.begin(), widgets.end());
-        }
+    void AddWidget(WidgetPtr& widget) {
+        widgets_.push_back(std::move(widget));
     }
 
-    void AddWidget(BaseWidget& widget) {
-        widgets_.push_back(&widget);
+    template<typename... Widgets>
+    void AddWidgets(WidgetPtr& widget, Widgets&&... widgets) {
+        AddWidget(widget);
+        if constexpr(sizeof...(widgets) > 0) {
+            AddWidgets(std::forward<Widgets>(widgets)...);
+        }
     }
 
     void Draw(rgb_matrix::FrameCanvas *canvas) final {
-        for(BaseWidget* widget : widgets_) {
+        for(WidgetPtr& widget : widgets_) {
             widget->Draw(canvas);
         }
     }
