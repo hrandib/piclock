@@ -38,3 +38,6 @@ depmod
 modprobe bh1750
 echo "bh1750" >> /etc/modules
 echo "bh1750 0x23" > /sys/bus/i2c/devices/i2c-1/new_device
+
+#echo "bmp280 0x76" > /sys/bus/i2c/devices/i2c-1/new_device
+#echo "hdc1080 0x40" > /sys/bus/i2c/devices/i2c-1/new_device

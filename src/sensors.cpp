@@ -77,10 +77,6 @@ SensorHub::SensorHub(const Options &options, BaseWidget &widget) : WidgetWrapper
         }
     }
 
-    for(auto& sensor : sensors_) {
-        std::cout << sensor.GetName() << "   " << (uint32_t)sensor.GetType() << std::endl;
-    }
-
 }
 
 void SensorHub::Draw(rgb_matrix::FrameCanvas *canvas) {

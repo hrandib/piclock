@@ -99,7 +99,4 @@ void Clock::Draw(rgb_matrix::FrameCanvas* canvas)
     rgb_matrix::DrawText(canvas, font_, position_[0], position_[1] + font_.baseline(),
                          color_, nullptr, text_buffer,
                          letterSpacing);
-    // Wait until we're ready to show it.
-    clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &next_time, nullptr);
-    next_time.tv_sec += 1;
 }

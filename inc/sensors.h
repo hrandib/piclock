@@ -37,7 +37,7 @@ enum class SensorType {
     MAX_VAL
 };
 
-inline const char* const UNITS[size_t(SensorType::MAX_VAL)] = { "℃", "%H", "lux", "hPa" };
+inline const char* const UNITS[size_t(SensorType::MAX_VAL)] = { "C", "%H", "lux", "hPa" };
 
 struct SensorDescriptor {
     std::string sensorName;
@@ -48,10 +48,10 @@ struct SensorDescriptor {
 
 const inline std::array<SensorDescriptor, 5> DESCRIPTORS = {{
     { "bh1750", SensorType::LUMINOSITY, "in_illuminance_raw", {} },
-    { "bmp280", SensorType::PRESSURE, "x", {} },
-    { "bmp280", SensorType::TEMPERATURE, "x", {} },
-    { "hdc1080", SensorType::HUMIDITY, "x", {} },
-    { "hdc1080", SensorType::TEMPERATURE, "x", {} },
+    { "bmp280", SensorType::PRESSURE, "in_pressure_input", {} },
+    { "bmp280", SensorType::TEMPERATURE, "in_temp_input", {} },
+    { "1-0040", SensorType::HUMIDITY, "in_humidityrelative_raw", {} },
+    { "1-0040", SensorType::TEMPERATURE, "in_temp_raw", {} },
 }};
 
 
