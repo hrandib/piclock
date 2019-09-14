@@ -72,29 +72,23 @@ public:
     const string& GetName() {
         return senseDesc_.sensorName;
     }
-
     SensorType GetType() {
         return senseDesc_.sensorType;
     }
-
     const path& GetSensorPath() {
         return senseDesc_.sensorPath;
     }
-
     const string& GetValueName() {
         return senseDesc_.valueName;
     }
-
-    string GetFormattedValue() {
-        return ReadValue() + " " + UNITS[size_t(GetType())];
-    }
-
     const PositionType& GetPosition() {
         return position_;
     }
-
     const Color& GetColor() {
         return color_;
+    }
+    string GetFormattedValue() {
+        return ReadValue() + " " + UNITS[size_t(GetType())];
     }
 
 private:
@@ -103,21 +97,7 @@ private:
     const PositionType position_;
     const Color color_;
 
-    string ReadValue() {
-        string result;
-        try {
-            fstream_ >> result;
-            fstream_.seekg(0);
-        } catch(const std::exception& e) {
-            std::cerr << "Read failed for" << GetName() << "  " << e.what() << std::endl;
-            fstream_.close();
-            fstream_.open(GetSensorPath()/GetValueName());
-            if(!fstream_) {
-                std::cerr << "Retry open failed" << std::endl;
-            }
-        }
-        return result;
-    }
+    string ReadValue();
 };
 
 using ms = std::chrono::milliseconds;
@@ -140,86 +120,13 @@ private:
     std::vector<Sensor> sensors_;
     Font font_;
 
-
 public:
-    SensorHub(const Options& options, BaseWidget& widget) : WidgetWrapper{widget}, sensors_{} {
-
-        class invalid_argument : public std::invalid_argument {
-        public:
-            invalid_argument(const string& msg) : std::invalid_argument{"SensorHub -> " + msg}
-            { }
-        };
-
-        OptionalNode optionalNode = options.GetNode("sensors");
-        if(!optionalNode) {
-            throw invalid_argument("Configuration node not found");
-        }
-        Node sensorsNode = *optionalNode;
-
-        const string fontFile = sensorsNode["font"].as<string>();
-        Path fontPath = options.GetExecDir() / fontFile;
-        if(!font_.LoadFont(fontPath.c_str())) {
-            throw invalid_argument("Couldn't load font "s + fontPath.c_str());
-        }
-        PositionType position;
-        try {
-            position = sensorsNode["position"].as<PositionType>();
-        } catch(const YAML::TypedBadConversion<int32_t>&) {
-            throw invalid_argument{"Reading position failed"};
-        }
-
-        std::cout << "Font baseline: " << font_.baseline() << std::endl;
-        for(const auto& [name, path] : GetAvailableSensors()) {
-            std::cout << name << "   " << path.c_str() << std::endl;
-            for(const auto& desc : DESCRIPTORS) {
-                if (desc.sensorName == name) {
-                    auto tempDesc = desc;
-                    tempDesc.sensorPath = path;
-                    sensors_.emplace_back(tempDesc, position, Color{255, 255, 0});
-                    position[1] += font_.height();
-                }
-            }
-        }
-
-        for(auto& sensor : sensors_) {
-            std::cout << sensor.GetName() << "   " << (uint32_t)sensor.GetType() << std::endl;
-        }
-
-    }
-
-    void Draw(rgb_matrix::FrameCanvas* canvas) final {
-        static constexpr size_t letterSpacing = 0;
-        for(auto& sensor : sensors_) {
-            auto& [xPos, yPos] = sensor.GetPosition();
-            Color color = sensor.GetColor();
-            string value = sensor.GetFormattedValue();
-            rgb_matrix::DrawText(canvas, font_, xPos, yPos + font_.baseline(),
-                                 color, nullptr, value.data(),
-                                 letterSpacing);
-        }
-    }
+    SensorHub(const Options& options, BaseWidget& widget);
+    void Draw(rgb_matrix::FrameCanvas* canvas) final;
 
 private:
-    PathMap GetAvailableSensors() {
-        PathMap result;
-        for(const Path& dir : dir_iterator{SENSORS_ROOT}) {
-            if(string name = GetSensorName(dir); !name.empty()) {
-                result[name] = dir;
-            }
-        }
-        return result;
-    }
-
-    string GetSensorName(const Path& sensorPath) {
-        try {
-            fstream file{sensorPath/"name"};
-            string result;
-            file >> result;
-            return result;
-        } catch(const std::exception&) {
-            return {};
-        }
-    }
+    PathMap GetAvailableSensors();
+    string GetSensorName(const Path& sensorPath);
 
 };
 

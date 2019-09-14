@@ -47,6 +47,7 @@ CppApplication { name: "piclock"
             "clock_impl.cpp",
             "ledwidget.cpp",
             "piclock.cpp",
+            "sensors.cpp",
         ]
     }
 
