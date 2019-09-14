@@ -9,12 +9,11 @@ clock:
   format: "%H:%M"
   position: [67, 0]
 sensors:
-  font: hoog10.bdf
+  font: fonts/6x13B.bdf
   position: [0, 0]
 
-# color settings for each sensor value
-  temperature: [255, 0, 0]
-  humidity: [0, 255, 0]
-  pressure: [0, 0, 255]
-  luminosity: [0, 255, 255]
-  co2: [255, 255, 0]
+# color settings for each sensor type
+  hdc1080: [0, 255, 0]
+  bmp280: [0, 0, 255]
+  bh1750: [0, 255, 255]
+  mh-z19: [255, 255, 0]
