@@ -40,9 +40,10 @@ enum class SensorType {
 inline const char* const UNITS[size_t(SensorType::MAX_VAL)] = { "C", "%H", "lux", "hPa" };
 
 struct SensorDescriptor {
-    std::string sensorName;
+    std::string_view moduleName;
+    std::string_view sensorName;
     SensorType sensorType;
-    std::string valueName;
+    std::string_view valueName;
     std::filesystem::path sensorPath;
 };
 
@@ -60,7 +61,7 @@ public:
         color_{color}
     {  }
 
-    const string& GetName() {
+    string_view GetName() {
         return senseDesc_.sensorName;
     }
     SensorType GetType() {
@@ -69,7 +70,7 @@ public:
     const path& GetSensorPath() {
         return senseDesc_.sensorPath;
     }
-    const string& GetValueName() {
+    string_view GetValueName() {
         return senseDesc_.valueName;
     }
     const PositionType& GetPosition() {
@@ -79,16 +80,15 @@ public:
         return color_;
     }
     string GetFormattedValue() {
-        return ReadValue() + " " + UNITS[size_t(GetType())];
+        return value_ + " " + UNITS[size_t(GetType())];
     }
-
+    void ReadValue();
 private:
     const SensorDescriptor senseDesc_;
     fstream fstream_;
     const PositionType position_;
     const Color color_;
-
-    string ReadValue();
+    string value_;
 };
 
 using ms = std::chrono::milliseconds;
@@ -118,7 +118,10 @@ public:
 private:
     PathMap GetAvailableSensors();
     string GetSensorName(const Path& sensorPath);
+    std::thread pollThd_;
 
+    [[noreturn]]
+    void PollThread();
 };
 
 

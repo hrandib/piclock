@@ -76,7 +76,6 @@ int main(int /*argc*/, char* argv[])
         mainWidget.Draw(offscreen);
         // Atomic swap with double buffer
         offscreen = matrix->SwapOnVSync(offscreen);
-        this_thread::sleep_for(ms(2000));
     }
     // Finished. Shut down the RGB matrix.
     matrix->Clear();

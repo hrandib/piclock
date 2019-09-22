@@ -24,7 +24,9 @@
 
 #include "led-matrix.h"
 #include <mutex>
+#include <condition_variable>
 #include <memory>
+#include <atomic>
 
 struct BaseWidget {
     virtual void Draw(rgb_matrix::FrameCanvas* canvas) = 0;
@@ -58,19 +60,15 @@ public:
         }
     }
 
-    void Draw(rgb_matrix::FrameCanvas *canvas) final {
-        for(WidgetPtr& widget : widgets_) {
-            widget->Draw(canvas);
-        }
-    }
+    void Draw(rgb_matrix::FrameCanvas *canvas) final;
 
-    void RequestUpdate() final {
-
-    }
+    void RequestUpdate() final;
 
 private:
     WidgetVector widgets_{};
     std::mutex mtx_{};
+    std::condition_variable cv_{};
+    std::atomic_bool pendingRequest_{};
 };
 
 #endif // LEDWIDGET_H

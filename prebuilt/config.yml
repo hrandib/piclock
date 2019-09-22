@@ -13,7 +13,7 @@ sensors:
   position: [0, 0]
 
 # color settings for each sensor type
-  1-0040: [0, 255, 0] #HDC1080
-  bmp280: [0, 0, 255]
+  1-0040: [50, 255, 0] #HDC1080
+  bmp280: [255, 0, 255]
   bh1750: [0, 255, 255]
   mh-z19: [255, 255, 0]

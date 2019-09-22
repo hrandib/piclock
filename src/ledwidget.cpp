@@ -21,6 +21,8 @@
  */
 #include "ledwidget.h"
 
+using std::unique_lock;
+
 BaseWidget::~BaseWidget() = default;
 
 WidgetWrapper::WidgetWrapper(BaseWidget &widget) : widget_{widget}
@@ -28,4 +30,23 @@ WidgetWrapper::WidgetWrapper(BaseWidget &widget) : widget_{widget}
 
 void WidgetWrapper::RequestUpdate() {
     widget_.RequestUpdate();
+}
+
+void MainWidget::Draw(rgb_matrix::FrameCanvas *canvas) {
+    unique_lock lk{mtx_};
+    cv_.wait(lk, [this]{ return pendingRequest_.load();});
+    for(WidgetPtr& widget : widgets_) {
+        widget->Draw(canvas);
+    }
+    pendingRequest_ = false;
+    lk.unlock();
+    cv_.notify_one();
+}
+
+void MainWidget::RequestUpdate() {
+    unique_lock lk{mtx_};
+    cv_.wait(lk, [this] { return !pendingRequest_.load();});
+    pendingRequest_ = true;
+    lk.unlock();
+    cv_.notify_one();
 }

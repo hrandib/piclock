@@ -22,15 +22,17 @@
 
 #include "sensors.h"
 
+using std::literals::operator""s;
+
 static const std::array<SensorDescriptor, 5> DESCRIPTORS = {{
-    { "bh1750", SensorType::LUMINOSITY, "in_illuminance_raw", {} },
-    { "bmp280", SensorType::PRESSURE, "in_pressure_input", {} },
-    { "bmp280", SensorType::TEMPERATURE, "in_temp_input", {} },
-    { "1-0040", SensorType::HUMIDITY, "in_humidityrelative_raw", {} },
-    { "1-0040", SensorType::TEMPERATURE, "in_temp_raw", {} },
+    { "bh1750", "bh1750", SensorType::LUMINOSITY, "in_illuminance_raw", {} },
+    { "bmp280", "bmp280", SensorType::PRESSURE, "in_pressure_input", {} },
+    { "bmp280", "bmp280", SensorType::TEMPERATURE, "in_temp_input", {} },
+    { "hdc1080", "1-0040", SensorType::HUMIDITY, "in_humidityrelative_raw", {} },
+    { "hdc1080", "1-0040", SensorType::TEMPERATURE, "in_temp_raw", {} },
 }};
 
-Sensor::string Sensor::ReadValue() {
+void Sensor::ReadValue() {
     string result;
     try {
         fstream_ >> result;
@@ -43,7 +45,7 @@ Sensor::string Sensor::ReadValue() {
             std::cerr << "Retry open failed" << std::endl;
         }
     }
-    return result;
+    value_ = result;
 }
 
 SensorHub::SensorHub(const Options &options, BaseWidget &widget) : WidgetWrapper{widget}, sensors_{} {
@@ -87,18 +89,28 @@ SensorHub::SensorHub(const Options &options, BaseWidget &widget) : WidgetWrapper
     } catch(const YAML::TypedBadConversion<uint32_t>&) {
         throw invalid_argument{"Error reading color from yaml"};
     }
+    pollThd_ = std::thread{&SensorHub::PollThread, this};
+    pollThd_.detach();
+}
 
+void SensorHub::PollThread() {
+    while(true) {
+        for(auto& sensor : sensors_) {
+            sensor.ReadValue();
+        }
+        RequestUpdate();
+        std::this_thread::sleep_for(10s);
+    }
 }
 
 void SensorHub::Draw(rgb_matrix::FrameCanvas *canvas) {
     static constexpr size_t letterSpacing = 0;
     for(auto& sensor : sensors_) {
         auto& [xPos, yPos] = sensor.GetPosition();
-                Color color = sensor.GetColor();
-                string value = sensor.GetFormattedValue();
-                rgb_matrix::DrawText(canvas, font_, xPos, yPos + font_.baseline(),
-                color, nullptr, value.data(),
-                letterSpacing);
+        Color color = sensor.GetColor();
+        string value = sensor.GetFormattedValue();
+        rgb_matrix::DrawText(canvas, font_, xPos, yPos + font_.baseline(),
+                color, nullptr, value.data(), letterSpacing);
     }
 }
 
