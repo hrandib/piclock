@@ -48,31 +48,53 @@ void Sensor::ReadValue() {
     value_ = result;
 }
 
-SensorHub::SensorHub(const Options &options, BaseWidget &widget) : WidgetWrapper{widget}, sensors_{} {
+SensorHub::SensorHub(const Options& options, BaseWidget& widget) : WidgetWrapper{widget}, sensors_{} {
+    const Node sensorsNode = GetSensorsNode(options);
+    PositionType startPosition = GetPosition(sensorsNode);
+    InitSensors(sensorsNode, startPosition);
+    pollThd_ = std::thread{&SensorHub::PollThread, this};
+    pollThd_.detach();
+}
 
-    class invalid_argument : public std::invalid_argument {
-    public:
-        invalid_argument(const string& msg) : std::invalid_argument{"SensorHub -> " + msg}
-        { }
-    };
+void SensorHub::PollThread() {
+    while(true) {
+        for(auto& sensor : sensors_) {
+            sensor.ReadValue();
+        }
+        RequestUpdate();
+        std::this_thread::sleep_for(10s);
+    }
+}
 
+SensorHub::Node SensorHub::GetSensorsNode(const Options& options)
+{
     OptionalNode optionalNode = options.GetNode("sensors");
     if(!optionalNode) {
         throw invalid_argument("Configuration node not found");
     }
-    Node sensorsNode = *optionalNode;
+    return *optionalNode;
+}
 
+void SensorHub::InitFont(const Options& options, const Node& sensorsNode)
+{
     const string fontFile = sensorsNode["font"].as<string>();
     Path fontPath = options.GetExecDir() / fontFile;
     if(!font_.LoadFont(fontPath.c_str())) {
         throw invalid_argument("Couldn't load font "s + fontPath.c_str());
     }
-    PositionType position;
+}
+
+PositionType SensorHub::GetPosition(const Node& sensorsNode)
+{
     try {
-        position = sensorsNode["position"].as<PositionType>();
+        return sensorsNode["position"].as<PositionType>();
     } catch(const YAML::TypedBadConversion<int32_t>&) {
         throw invalid_argument{"Reading position failed"};
     }
+}
+
+void SensorHub::InitSensors(const Node& sensorsNode, PositionType position)
+{
     try{
         for(const auto& [name, path] : GetAvailableSensors()) {
             std::cout << name << "   " << path.c_str() << std::endl;
@@ -89,21 +111,9 @@ SensorHub::SensorHub(const Options &options, BaseWidget &widget) : WidgetWrapper
     } catch(const YAML::TypedBadConversion<uint32_t>&) {
         throw invalid_argument{"Error reading color from yaml"};
     }
-    pollThd_ = std::thread{&SensorHub::PollThread, this};
-    pollThd_.detach();
 }
 
-void SensorHub::PollThread() {
-    while(true) {
-        for(auto& sensor : sensors_) {
-            sensor.ReadValue();
-        }
-        RequestUpdate();
-        std::this_thread::sleep_for(10s);
-    }
-}
-
-void SensorHub::Draw(rgb_matrix::FrameCanvas *canvas) {
+void SensorHub::Draw(rgb_matrix::FrameCanvas* canvas) {
     static constexpr size_t letterSpacing = 0;
     for(auto& sensor : sensors_) {
         auto& [xPos, yPos] = sensor.GetPosition();
@@ -124,7 +134,7 @@ SensorHub::PathMap SensorHub::GetAvailableSensors() {
     return result;
 }
 
-SensorHub::string SensorHub::GetSensorName(const SensorHub::Path &sensorPath) {
+SensorHub::string SensorHub::GetSensorName(const Path& sensorPath) {
     try {
         fstream file{sensorPath/"name"};
         string result;
@@ -134,3 +144,6 @@ SensorHub::string SensorHub::GetSensorName(const SensorHub::Path &sensorPath) {
         return {};
     }
 }
+
+SensorHub::invalid_argument::invalid_argument(const string& msg) : std::invalid_argument{"SensorHub -> " + msg}
+{ }

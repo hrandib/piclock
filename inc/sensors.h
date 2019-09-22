@@ -106,6 +106,11 @@ private:
     using Font = rgb_matrix::Font;
     using Color = YAML::Color;
 
+    class invalid_argument : public std::invalid_argument {
+    public:
+        invalid_argument(const string& msg);
+    };
+
     static constexpr string_view SENSORS_ROOT = "/sys/bus/iio/devices";
 
     std::vector<Sensor> sensors_;
@@ -122,6 +127,11 @@ private:
 
     [[noreturn]]
     void PollThread();
+
+    Node GetSensorsNode(const Options& options);
+    void InitFont(const Options& options, const Node& sensorsNode);
+    PositionType GetPosition(const Node& sensorsNode);
+    void InitSensors(const Node& sensorsNode, PositionType startPosition);
 };
 
 
