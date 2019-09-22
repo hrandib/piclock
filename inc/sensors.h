@@ -46,15 +46,6 @@ struct SensorDescriptor {
     std::filesystem::path sensorPath;
 };
 
-const inline std::array<SensorDescriptor, 5> DESCRIPTORS = {{
-    { "bh1750", SensorType::LUMINOSITY, "in_illuminance_raw", {} },
-    { "bmp280", SensorType::PRESSURE, "in_pressure_input", {} },
-    { "bmp280", SensorType::TEMPERATURE, "in_temp_input", {} },
-    { "1-0040", SensorType::HUMIDITY, "in_humidityrelative_raw", {} },
-    { "1-0040", SensorType::TEMPERATURE, "in_temp_raw", {} },
-}};
-
-
 class Sensor {
 public:
     using path = std::filesystem::path;

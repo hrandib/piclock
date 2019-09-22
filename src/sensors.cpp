@@ -22,6 +22,14 @@
 
 #include "sensors.h"
 
+static const std::array<SensorDescriptor, 5> DESCRIPTORS = {{
+    { "bh1750", SensorType::LUMINOSITY, "in_illuminance_raw", {} },
+    { "bmp280", SensorType::PRESSURE, "in_pressure_input", {} },
+    { "bmp280", SensorType::TEMPERATURE, "in_temp_input", {} },
+    { "1-0040", SensorType::HUMIDITY, "in_humidityrelative_raw", {} },
+    { "1-0040", SensorType::TEMPERATURE, "in_temp_raw", {} },
+}};
+
 Sensor::string Sensor::ReadValue() {
     string result;
     try {
@@ -63,18 +71,21 @@ SensorHub::SensorHub(const Options &options, BaseWidget &widget) : WidgetWrapper
     } catch(const YAML::TypedBadConversion<int32_t>&) {
         throw invalid_argument{"Reading position failed"};
     }
-
-    std::cout << "Font baseline: " << font_.baseline() << std::endl;
-    for(const auto& [name, path] : GetAvailableSensors()) {
-        std::cout << name << "   " << path.c_str() << std::endl;
-        for(const auto& desc : DESCRIPTORS) {
-            if (desc.sensorName == name) {
-                auto tempDesc = desc;
-                tempDesc.sensorPath = path;
-                sensors_.emplace_back(tempDesc, position, Color{255, 255, 0});
-                position[1] += font_.height();
+    try{
+        for(const auto& [name, path] : GetAvailableSensors()) {
+            std::cout << name << "   " << path.c_str() << std::endl;
+            for(const auto& desc : DESCRIPTORS) {
+                if (desc.sensorName == name) {
+                    Color color = sensorsNode[name].as<Color>();
+                    auto tempDesc = desc;
+                    tempDesc.sensorPath = path;
+                    sensors_.emplace_back(tempDesc, position, color);
+                    position[1] += font_.height();
+                }
             }
         }
+    } catch(const YAML::TypedBadConversion<uint32_t>&) {
+        throw invalid_argument{"Error reading color from yaml"};
     }
 
 }
